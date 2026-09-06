@@ -18,37 +18,37 @@ SubFolders Verbatim
 # Adjust the right-hand names here if you change IMAP_FOLDER_* in
 # config/zpush/imap.php - they must match exactly.
 Channel gmail-inbox
-Master :gmail-remote:
-Slave :gmail-local:
+Far :gmail-remote:
+Near :gmail-local:
 Patterns "INBOX"
 Create Both
 Expunge Both
 SyncState *
 
 Channel gmail-sent
-Master :gmail-remote:"[Gmail]/Sent Mail"
-Slave :gmail-local:"Sent"
+Far :gmail-remote:"[Gmail]/Sent Mail"
+Near :gmail-local:"Sent"
 Create Both
 Expunge Both
 SyncState *
 
 Channel gmail-drafts
-Master :gmail-remote:"[Gmail]/Drafts"
-Slave :gmail-local:"Drafts"
+Far :gmail-remote:"[Gmail]/Drafts"
+Near :gmail-local:"Drafts"
 Create Both
 Expunge Both
 SyncState *
 
 Channel gmail-trash
-Master :gmail-remote:"[Gmail]/Trash"
-Slave :gmail-local:"Trash"
+Far :gmail-remote:"[Gmail]/Trash"
+Near :gmail-local:"Trash"
 Create Both
 Expunge Both
 SyncState *
 
 Channel gmail-spam
-Master :gmail-remote:"[Gmail]/Spam"
-Slave :gmail-local:"Spam"
+Far :gmail-remote:"[Gmail]/Spam"
+Near :gmail-local:"Spam"
 Create Both
 Expunge Both
 SyncState *
