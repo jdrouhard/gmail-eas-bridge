@@ -83,14 +83,26 @@ Exchange. Server = your reverse proxy's hostname, username = anything
   Changing `PUID`/`PGID` after mail has already synced triggers a
   one-time recursive `chown` of `/data` on the next start, which can
   take a while on a large mailbox.
-- **z-push config field names drift between releases.** The
-  `config/zpush/imap.php` in this repo was written against field
-  names confirmed on the Z-Hub/Z-Push `develop` branch at the time
-  this was put together (`IMAP_SMTP_METHOD`, `$imap_smtp_params`,
-  `IMAP_FOLDER_*`). Diff it against whatever `ZPUSH_REF` you actually
-  build (`ARG ZPUSH_REF` in the Dockerfile, default `master`) - pin a
-  tagged release rather than tracking a branch for anything you
-  depend on daily.
+- **`config/zpush/config.php` and `imap.php` are the real stock z-push
+  files, patched, not hand-written from scratch.** An earlier version
+  of this stack shipped hand-written versions of both that only
+  defined the handful of constants this stack cares about - z-push's
+  core code reads dozens of others directly without `defined()`
+  guards, so that approach hit fatal "undefined constant" errors at
+  runtime. These are now the actual stock `src/config.php` and
+  `src/backend/imap/config.php` from the Z-Hub/Z-Push repo's `develop`
+  branch, each with a small number of lines patched (search for
+  `// patched:` comments to see exactly what changed and why).
+- **`IMAP_DISABLE_AUTHENTICATOR = 'PLAIN'`** works around a c-client
+  (the library behind PHP's `imap_open()`) quirk: it hardcodes a
+  refusal to send SASL `AUTH=PLAIN` over a connection it considers
+  insecure - which loopback Dovecot always is, since it has no TLS at
+  all - regardless of Dovecot's own `disable_plaintext_auth` setting.
+  You'll see `SECURITY PROBLEM: insecure server advertised AUTH=PLAIN`
+  in z-push's logs without this. Disabling that specific authenticator
+  makes it fall back to the plain IMAP `LOGIN` command instead - same
+  credentials, same lack of encryption (fine here, loopback-only),
+  just a different code path that doesn't have this refusal built in.
 - **Sent-mail duplication risk.** Gmail's SMTP auto-saves a copy of
   anything relayed through `smtp.gmail.com` into `[Gmail]/Sent Mail`
   server-side. This stack does *not* have z-push separately append
@@ -128,8 +140,8 @@ supervisord.conf           # runs dovecot, php-fpm, nginx, goimapnotify
 docker-compose.yml
 .env.example
 config/
-  zpush/config.php         # z-push main config
-  zpush/imap.php           # z-push IMAP backend config (points at local Dovecot)
+  zpush/config.php         # stock z-push config, patched (see file for // patched: markers)
+  zpush/imap.php           # stock IMAP backend config, patched to point at local Dovecot
   nginx/zpush.conf         # nginx site config
   dovecot/dovecot.conf     # main Dovecot config (loopback-only)
   dovecot/conf.d/10-master.conf
