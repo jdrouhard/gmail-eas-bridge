@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN useradd -u 1000 -U -d /data/maildir -m -s /usr/sbin/nologin vmail
 
 # --- z-push (community-maintained fork) -------------------------------------
-ARG ZPUSH_REF=master
+ARG ZPUSH_REF=develop
 RUN git clone --depth 1 --branch ${ZPUSH_REF} https://github.com/Z-Hub/Z-Push.git /tmp/z-push \
     && mkdir -p /usr/share/z-push \
     && cp -r /tmp/z-push/src/* /usr/share/z-push/ \

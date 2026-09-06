@@ -50,3 +50,5 @@ define('IMAP_FOLDER_DRAFT',   'Drafts');
 define('IMAP_FOLDER_TRASH',   'Trash');
 define('IMAP_FOLDER_SPAM',    'Spam');
 define('IMAP_FOLDER_ARCHIVE', 'Archive');
+
+define('SYSTEM_MIME_TYPES_MAPPING', '/etc/mime.types');

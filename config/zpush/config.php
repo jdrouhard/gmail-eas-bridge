@@ -22,11 +22,9 @@ define('LOGFILE', LOGFILEDIR . 'z-push.log');
 define('LOGERRORFILE', LOGFILEDIR . 'z-push-error.log');
 define('LOGLEVEL', LOGLEVEL_WARN);
 define('LOGUSERLEVEL', LOGLEVEL_WARN);
+$specialLogUsers = array();
 
 define('PROVISIONING', false);
-define('LOOPDETECTION', true);
-
-// Devices talk to this container over plain HTTP; terminate TLS in
-// front of it (reverse proxy / load balancer) before exposing it
-// to the internet. ActiveSync clients require HTTPS in practice.
-define('USE_X_FORWARDED_FOR_HEADER', true);
+define('SYNC_CONFLICT_DEFAULT', SYNC_CONFLICT_OVERWRITE_PIM);
+define('SYNC_TIMEOUT_MEDIUM_DEVICETYPES', "SAMSUNGGTI");
+define('SYNC_TIMEOUT_LONG_DEVICETYPES',   "iPod, iPad, iPhone, WP, WindowsOutlook, WindowsMail");
