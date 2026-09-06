@@ -53,9 +53,26 @@ Create Both
 Expunge Both
 SyncState *
 
+# [Gmail]/All Mail is Gmail's "every message, regardless of label" view -
+# a message sitting in INBOX also lives here under a DIFFERENT UID. That
+# means every Inbox (and Sent, etc.) message gets synced twice: once as
+# INBOX/Sent/etc., once again as Archive. The two copies have independent
+# read/flag state - marking one read doesn't affect the other, since
+# they're unrelated mbsync channels. This is how Gmail's IMAP actually
+# models things, not a bug in this config. Comment this channel (and its
+# line in "Group gmail" below) out if you'd rather not pay that storage/
+# state-sync cost and just live without a synced Archive folder.
+Channel gmail-archive
+Far :gmail-remote:"[Gmail]/All Mail"
+Near :gmail-local:"Archive"
+Create Both
+Expunge Both
+SyncState *
+
 Group gmail
 Channel gmail-inbox
 Channel gmail-sent
 Channel gmail-drafts
 Channel gmail-trash
 Channel gmail-spam
+Channel gmail-archive

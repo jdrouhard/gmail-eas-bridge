@@ -98,10 +98,14 @@ Exchange. Server = your reverse proxy's hostname, username = anything
   down on the next sync. If you find z-push's IMAP backend still
   appends a copy itself in whatever version you build, you'll get
   duplicates; check `IMAP_FOLDER_SENT` behavior for your checkout.
-- **`[Gmail]/All Mail` is intentionally excluded** from
-  `mbsyncrc.template` to sidestep the duplicate-UID-across-labels
-  problem. If you want an Archive folder synced, you'll need to think
-  through how you want label/folder duplication handled.
+- **`[Gmail]/All Mail` is synced as `Archive`**, which means every
+  Inbox (and Sent, etc.) message is duplicated locally: once under its
+  normal folder, once again under Archive, with independent read/flag
+  state between the two copies. That's how Gmail's IMAP actually
+  models labels-as-folders, not a bug in this config. If you'd rather
+  not pay that storage/state-sync cost, comment out the `gmail-archive`
+  channel (and its line in `Group gmail`) in `mbsyncrc.template` and
+  live without a synced Archive folder.
 - **Dovecot submission relay auth** uses the plaintext
   `submission_relay_user`/`submission_relay_password` settings, which
   is the simple smarthost-relay approach for a fixed single account.
