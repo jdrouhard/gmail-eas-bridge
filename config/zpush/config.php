@@ -6,6 +6,9 @@
  * the full list of options and their defaults.
  */
 
+define('BASE_PATH', dirname($_SERVER['SCRIPT_FILENAME']). '/');
+define('SCRIPT_TIMEOUT', 0);
+
 define('TIMEZONE', getenv('TZ') ?: 'UTC');
 define('BACKEND_PROVIDER', 'BackendIMAP');
 
