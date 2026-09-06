@@ -132,5 +132,5 @@ config/
   dovecot/templates/10-auth.conf.template        # rendered at runtime
   dovecot/templates/10-submission.conf.template  # rendered at runtime
   mbsync/mbsyncrc.template                       # rendered at runtime
-  imapnotify/gmail.conf.template                 # rendered at runtime
+  imapnotify/gmail.json.template                 # rendered at runtime
 ```

@@ -78,8 +78,8 @@ chmod 600 /etc/dovecot/conf.d/10-submission.conf /etc/dovecot/conf.d/10-auth.con
 render /etc/mbsync/mbsyncrc.template /etc/mbsync/mbsyncrc 'GMAIL_USER'
 chmod 600 /etc/mbsync/mbsyncrc
 
-render /etc/imapnotify/gmail.conf.template /etc/imapnotify/gmail.conf 'GMAIL_USER'
-chmod 600 /etc/imapnotify/gmail.conf
+render /etc/imapnotify/gmail.json.template /etc/imapnotify/gmail.json 'GMAIL_USER'
+chmod 600 /etc/imapnotify/gmail.json
 
 # Make sure the runtime dirs exist. Everything under /data - the one
 # bind mount you're expected to provide - is owned by vmail (PUID:PGID).
@@ -96,7 +96,7 @@ else
 fi
 
 # goimapnotify/mbsync/php-fpm/dovecot's mail delivery all run as vmail.
-chown vmail:vmail /etc/mbsync/mbsyncrc /etc/imapnotify/gmail.conf
+chown vmail:vmail /etc/mbsync/mbsyncrc /etc/imapnotify/gmail.json
 
 # Prime the maildir on first boot so z-push has something to serve
 # immediately instead of waiting for the first IDLE event.

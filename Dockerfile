@@ -57,7 +57,7 @@ COPY config/dovecot/dovecot.conf    /etc/dovecot/dovecot.conf
 COPY config/dovecot/conf.d/         /etc/dovecot/conf.d/
 COPY config/dovecot/templates/      /etc/dovecot/templates/
 COPY config/mbsync/mbsyncrc.template        /etc/mbsync/mbsyncrc.template
-COPY config/imapnotify/gmail.conf.template  /etc/imapnotify/gmail.conf.template
+COPY config/imapnotify/gmail.json.template  /etc/imapnotify/gmail.json.template
 COPY supervisord.conf /etc/supervisor/conf.d/stack.conf
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh \
