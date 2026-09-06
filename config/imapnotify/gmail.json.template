@@ -2,7 +2,6 @@
   "host": "imap.gmail.com",
   "port": 993,
   "tls": true,
-  "tlsOptions": { "servername": "imap.gmail.com" },
   "username": "${GMAIL_USER}",
   "passwordCmd": "cat /run/secrets/gmail_app_password",
   "onNewMail": "/usr/bin/mbsync -c /etc/mbsync/mbsyncrc gmail",
