@@ -37,10 +37,16 @@ RUN useradd -u 1000 -U -d /data/maildir -m -s /usr/sbin/nologin vmail
 
 # --- z-push (community-maintained fork) -------------------------------------
 ARG ZPUSH_REF=develop
+# master is abandoned (last commit 2021) - develop is where all active
+# work happens and what config/zpush/*.php were verified against. See
+# README.md for the release/2.7 alternative if you want something more
+# pinned than tracking develop's moving HEAD.
+COPY patches/ /tmp/patches/
 RUN git clone --depth 1 --branch ${ZPUSH_REF} https://github.com/Z-Hub/Z-Push.git /tmp/z-push \
+    && git -C /tmp/z-push apply /tmp/patches/imap-delete-no-trash-move.patch \
     && mkdir -p /usr/share/z-push \
     && cp -r /tmp/z-push/src/* /usr/share/z-push/ \
-    && rm -rf /tmp/z-push \
+    && rm -rf /tmp/z-push /tmp/patches \
     && mkdir -p /data/zpush-state /var/log/z-push \
     && chown -R vmail:vmail /usr/share/z-push /data/zpush-state /var/log/z-push
 

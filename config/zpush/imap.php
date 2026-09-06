@@ -100,7 +100,7 @@ define('IMAP_FOLDER_SENT', 'SENT');
 define('IMAP_FOLDER_DRAFT', 'DRAFTS');
 
 // Trash folder name (case doesn't matter)
-define('IMAP_FOLDER_TRASH', 'ARCHIVE'); // patched: see README.md "Delete vs Archive" - deliberately same as IMAP_FOLDER_ARCHIVE
+define('IMAP_FOLDER_TRASH', 'TRASH');
 
 // Spam folder name (case doesn't matter). Only showed as special by iOS devices
 define('IMAP_FOLDER_SPAM', 'SPAM');

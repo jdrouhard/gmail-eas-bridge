@@ -149,4 +149,7 @@ config/
   dovecot/templates/10-submission.conf.template  # rendered at runtime
   mbsync/mbsyncrc.template                       # rendered at runtime
   imapnotify/gmail.json.template                 # rendered at runtime
+patches/
+  imap-delete-no-trash-move.patch  # applied via `git apply` during the Docker build,
+                                    # see "Delete vs Archive" above
 ```
