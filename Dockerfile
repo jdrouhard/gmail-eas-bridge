@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         dovecot-core dovecot-imapd dovecot-submissiond \
         isync \
         nginx-light \
-        php-fpm php-imap php-xml php-mbstring \
+        php-fpm php-imap php-intl php-xml php-mbstring \
         git supervisor gettext-base ca-certificates tzdata gosu passwd \
     && rm -rf /var/lib/apt/lists/* \
     && PHP_FPM_POOL=$(find /etc/php -name "www.conf" -path "*fpm*" | head -n1) \
