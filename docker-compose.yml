@@ -1,0 +1,21 @@
+services:
+  gmail-eas:
+    build: .
+    image: gmail-eas-bridge:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - TZ=${TZ:-UTC}
+    secrets:
+      - gmail_app_password
+    volumes:
+      - ./data:/data
+    ports:
+      # Do NOT expose this directly to the internet - put a TLS-terminating
+      # reverse proxy (Caddy/Traefik/nginx) in front of it. ActiveSync
+      # clients require HTTPS.
+      - "127.0.0.1:8080:80"
+
+secrets:
+  gmail_app_password:
+    file: ./secrets/gmail_app_password.txt

@@ -1,0 +1,61 @@
+IMAPAccount gmail
+Host imap.gmail.com
+User ${GMAIL_USER}
+PassCmd "cat /run/secrets/gmail_app_password"
+SSLType IMAPS
+CertificateFile /etc/ssl/certs/ca-certificates.crt
+
+IMAPStore gmail-remote
+Account gmail
+
+MaildirStore gmail-local
+Path /data/maildir/
+Inbox /data/maildir/INBOX
+SubFolders Verbatim
+
+# Map Gmail's [Gmail]/* special folders onto the plain folder names
+# z-push's imap.php config expects (Sent, Drafts, Trash, Spam, Archive).
+# Adjust the right-hand names here if you change IMAP_FOLDER_* in
+# config/zpush/imap.php - they must match exactly.
+Channel gmail-inbox
+Master :gmail-remote:
+Slave :gmail-local:
+Patterns "INBOX"
+Create Both
+Expunge Both
+SyncState *
+
+Channel gmail-sent
+Master :gmail-remote:"[Gmail]/Sent Mail"
+Slave :gmail-local:"Sent"
+Create Both
+Expunge Both
+SyncState *
+
+Channel gmail-drafts
+Master :gmail-remote:"[Gmail]/Drafts"
+Slave :gmail-local:"Drafts"
+Create Both
+Expunge Both
+SyncState *
+
+Channel gmail-trash
+Master :gmail-remote:"[Gmail]/Trash"
+Slave :gmail-local:"Trash"
+Create Both
+Expunge Both
+SyncState *
+
+Channel gmail-spam
+Master :gmail-remote:"[Gmail]/Spam"
+Slave :gmail-local:"Spam"
+Create Both
+Expunge Both
+SyncState *
+
+Group gmail
+Channel gmail-inbox
+Channel gmail-sent
+Channel gmail-drafts
+Channel gmail-trash
+Channel gmail-spam

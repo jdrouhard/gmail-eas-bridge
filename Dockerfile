@@ -1,0 +1,68 @@
+# syntax=docker/dockerfile:1
+
+# ---------------------------------------------------------------------------
+# Stage 1: build goimapnotify (no prebuilt Debian package exists)
+# ---------------------------------------------------------------------------
+FROM golang:1.22-bookworm AS gobuild
+
+WORKDIR /src
+RUN git clone --depth 1 https://github.com/bamthomas/goimapnotify.git . \
+    && GOFLAGS=-mod=mod GOPROXY=direct CGO_ENABLED=0 go build -o /out/goimapnotify .
+
+# ---------------------------------------------------------------------------
+# Stage 2: runtime image
+# ---------------------------------------------------------------------------
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    TZ=UTC
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        dovecot-core dovecot-imapd dovecot-submissiond \
+        isync \
+        nginx-light \
+        php-fpm php-imap php-xml php-mbstring \
+        git supervisor gettext-base ca-certificates tzdata gosu passwd \
+    && rm -rf /var/lib/apt/lists/* \
+    && PHP_FPM_POOL=$(find /etc/php -name "www.conf" -path "*fpm*" | head -n1) \
+    && sed -i "s|^listen = .*|listen = 127.0.0.1:9000|" "$PHP_FPM_POOL" \
+    && sed -i "s|^user = .*|user = vmail|" "$PHP_FPM_POOL" \
+    && sed -i "s|^group = .*|group = vmail|" "$PHP_FPM_POOL" \
+    && sed -i "s|^;\?daemonize = .*|daemonize = no|" $(find /etc/php -name "php-fpm.conf" | head -n1)
+
+# --- single app/mail user, remapped to PUID/PGID at container start ---------
+# (see entrypoint.sh) - this is the only user that ever touches /data.
+# 1000:1000 is just the build-time default; entrypoint.sh remaps it.
+RUN useradd -u 1000 -U -d /data/maildir -m -s /usr/sbin/nologin vmail
+
+# --- z-push (community-maintained fork) -------------------------------------
+ARG ZPUSH_REF=master
+RUN git clone --depth 1 --branch ${ZPUSH_REF} https://github.com/Z-Hub/Z-Push.git /tmp/z-push \
+    && mkdir -p /usr/share/z-push \
+    && cp -r /tmp/z-push/src/* /usr/share/z-push/ \
+    && rm -rf /tmp/z-push \
+    && mkdir -p /data/zpush-state /var/log/z-push \
+    && chown -R vmail:vmail /usr/share/z-push /data/zpush-state /var/log/z-push
+
+# --- goimapnotify binary from build stage ------------------------------------
+COPY --from=gobuild /out/goimapnotify /usr/local/bin/goimapnotify
+
+RUN mkdir -p /data/maildir && chown -R vmail:vmail /data/maildir
+
+# --- static config -----------------------------------------------------------
+COPY config/zpush/config.php        /usr/share/z-push/config.php
+COPY config/zpush/imap.php          /usr/share/z-push/backend/imap/config.php
+COPY config/nginx/zpush.conf        /etc/nginx/sites-enabled/default
+COPY config/dovecot/dovecot.conf    /etc/dovecot/dovecot.conf
+COPY config/dovecot/conf.d/         /etc/dovecot/conf.d/
+COPY config/mbsync/mbsyncrc.template        /etc/mbsync/mbsyncrc.template
+COPY config/imapnotify/gmail.conf.template  /etc/imapnotify/gmail.conf.template
+COPY supervisord.conf /etc/supervisor/conf.d/stack.conf
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh \
+    && chown vmail:vmail /usr/share/z-push/config.php /usr/share/z-push/backend/imap/config.php
+
+EXPOSE 80
+VOLUME ["/data"]
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -1,0 +1,12 @@
+# Rendered from this template at container start by entrypoint.sh.
+# Relays anything submitted on 127.0.0.1:587 to Gmail's real SMTP,
+# authenticating as GMAIL_USER with GMAIL_APP_PASSWORD.
+
+submission_relay_host = smtp.gmail.com
+submission_relay_port = 587
+submission_relay_ssl = starttls
+submission_relay_ssl_verify = yes
+submission_relay_user = ${GMAIL_USER}
+submission_relay_master_user =
+submission_relay_password = ${GMAIL_APP_PASSWORD}
+submission_relay_trusted = yes

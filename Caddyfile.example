@@ -1,0 +1,26 @@
+eas.yourdomain.tld {
+    # Caddy already forwards Host, X-Forwarded-For, and X-Forwarded-Proto
+    # to the upstream by default - nothing extra needed for that.
+
+    reverse_proxy 127.0.0.1:8080 {
+        # EAS "Ping" is a long-poll: the client holds the connection open
+        # for HEARTBEATINTERVAL (commonly 10-20+ minutes) waiting for new
+        # mail. Caddy's defaults are generous, but pin these explicitly so
+        # a future Caddy upgrade or global default change doesn't silently
+        # start killing those connections.
+        transport http {
+            read_timeout 30m
+            write_timeout 30m
+            dial_timeout 10s
+        }
+
+        # Don't let Caddy buffer/delay the response - EAS clients expect
+        # the push notification as soon as z-push has one.
+        flush_interval -1
+    }
+
+    # No request_body size cap is set here, so it inherits Caddy's
+    # (effectively unlimited) default. If you've set one globally,
+    # make sure it's at least as large as client_max_body_size in
+    # the container's own nginx config (50m by default in this stack).
+}

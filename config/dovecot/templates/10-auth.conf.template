@@ -1,0 +1,20 @@
+# z-push authenticates to THIS Dovecot with the credentials the EAS
+# device sent it. Since this is a single-user bridge, we accept any
+# username and check the password against ZPUSH_LOCAL_PASSWORD
+# (templated in at container start by entrypoint.sh).
+#
+# The EAS device should be configured with username = your Gmail
+# address (or anything, really) and password = ZPUSH_LOCAL_PASSWORD.
+# This password is unrelated to your actual Gmail password/app password.
+
+auth_mechanisms = plain login
+
+passdb {
+  driver = static
+  args = password=${ZPUSH_LOCAL_PASSWORD}
+}
+
+userdb {
+  driver = static
+  args = uid=vmail gid=vmail home=/data/maildir
+}
