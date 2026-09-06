@@ -28,7 +28,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && sed -i "s|^listen = .*|listen = 127.0.0.1:9000|" "$PHP_FPM_POOL" \
     && sed -i "s|^user = .*|user = vmail|" "$PHP_FPM_POOL" \
     && sed -i "s|^group = .*|group = vmail|" "$PHP_FPM_POOL" \
-    && sed -i "s|^;\?daemonize = .*|daemonize = no|" $(find /etc/php -name "php-fpm.conf" | head -n1)
+    && sed -i "s|^;\?daemonize = .*|daemonize = no|" $(find /etc/php -name "php-fpm.conf" | head -n1) \
+    && PHP_INI=$(find /etc/php -name "php.ini" -path "*fpm*" | head -n1) \
+    && sed -i \
+        -e "s|^memory_limit = .*|memory_limit = 512M|" \
+        -e "s|^max_execution_time = .*|max_execution_time = 300|" \
+        -e "s|^upload_max_filesize = .*|upload_max_filesize = 50M|" \
+        -e "s|^post_max_size = .*|post_max_size = 50M|" \
+        "$PHP_INI"
 
 # --- single app/mail user, remapped to PUID/PGID at container start ---------
 # (see entrypoint.sh) - this is the only user that ever touches /data.
