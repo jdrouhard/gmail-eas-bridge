@@ -41,12 +41,21 @@ docker build -t gmail-eas-bridge .
 
 1. Enable 2FA on the Google account, then create an **App Password**:
    https://myaccount.google.com/apppasswords
-2. `cp .env.example .env` and fill in `GMAIL_USER` and
-   `ZPUSH_LOCAL_PASSWORD` (a password you invent for the EAS device to
-   use against this bridge - not your Gmail password).
-3. `mkdir -p secrets && echo -n 'xxxx xxxx xxxx xxxx' > secrets/gmail_app_password.txt`
-   (the App Password, used by both mbsync/goimapnotify and Dovecot's
-   submission relay).
+2. `cp .env.example .env` and fill in `GMAIL_USER`.
+3. Create both secret files:
+   ```
+   mkdir -p secrets
+   echo -n 'xxxx xxxx xxxx xxxx' > secrets/gmail_app_password.txt   # the App Password
+   echo -n 'something-long-and-random' > secrets/zpush_local_password.txt
+   chmod 600 secrets/*.txt
+   ```
+   `zpush_local_password` is what your iPhone (and any other EAS
+   device) authenticates against *this bridge* with - it's unrelated
+   to your Gmail password, you're inventing it. Both live in
+   `secrets/`, not `.env`, so they never show up in `docker inspect`
+   or the container's visible environment - see the note in
+   `.env.example` if you're not using `docker compose` and need the
+   env-var fallback instead.
 4. Put a TLS-terminating reverse proxy (Caddy, Traefik, nginx) in
    front of this container. iOS's ActiveSync client requires HTTPS in
    practice - don't expose port 80 directly.

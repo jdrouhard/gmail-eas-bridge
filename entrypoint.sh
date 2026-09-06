@@ -32,19 +32,30 @@ chown -R vmail:vmail \
     2>/dev/null || true
 
 : "${GMAIL_USER:?GMAIL_USER must be set (your full Gmail address)}"
-: "${ZPUSH_LOCAL_PASSWORD:?ZPUSH_LOCAL_PASSWORD must be set (password EAS devices use against this bridge)}"
 
-# GMAIL_APP_PASSWORD may come in as an env var OR as a Docker/Swarm/K8s
-# secret file - prefer the secret file if present.
+# Both secrets may come in as an env var OR as a mounted secret file -
+# prefer the file if present, same pattern for both. There's no good
+# reason to treat one credential more carefully than the other: anyone
+# with ZPUSH_LOCAL_PASSWORD and network access to the EAS endpoint can
+# read/send your mail just as fully as anyone with the Gmail password.
+if [ -f /run/secrets/zpush_local_password ]; then
+    ZPUSH_LOCAL_PASSWORD="$(cat /run/secrets/zpush_local_password)"
+else
+    : "${ZPUSH_LOCAL_PASSWORD:?Set ZPUSH_LOCAL_PASSWORD or mount /run/secrets/zpush_local_password}"
+fi
+
 if [ -f /run/secrets/gmail_app_password ]; then
     GMAIL_APP_PASSWORD="$(cat /run/secrets/gmail_app_password)"
 else
     : "${GMAIL_APP_PASSWORD:?Set GMAIL_APP_PASSWORD or mount /run/secrets/gmail_app_password}"
     mkdir -p /run/secrets
     printf '%s' "$GMAIL_APP_PASSWORD" > /run/secrets/gmail_app_password
+    # Only this self-written copy needs its perms fixed up - a
+    # Docker/Compose-mounted secret is already world-readable (0444)
+    # and its mount may not even be writable from in here.
+    chown vmail:vmail /run/secrets/gmail_app_password
+    chmod 600 /run/secrets/gmail_app_password
 fi
-chown vmail:vmail /run/secrets/gmail_app_password
-chmod 600 /run/secrets/gmail_app_password
 
 export GMAIL_USER ZPUSH_LOCAL_PASSWORD GMAIL_APP_PASSWORD
 
