@@ -55,6 +55,7 @@ COPY config/zpush/imap.php          /usr/share/z-push/backend/imap/config.php
 COPY config/nginx/zpush.conf        /etc/nginx/sites-enabled/default
 COPY config/dovecot/dovecot.conf    /etc/dovecot/dovecot.conf
 COPY config/dovecot/conf.d/         /etc/dovecot/conf.d/
+COPY config/dovecot/templates/      /etc/dovecot/templates/
 COPY config/mbsync/mbsyncrc.template        /etc/mbsync/mbsyncrc.template
 COPY config/imapnotify/gmail.conf.template  /etc/imapnotify/gmail.conf.template
 COPY supervisord.conf /etc/supervisor/conf.d/stack.conf
