@@ -3,11 +3,11 @@
 # ---------------------------------------------------------------------------
 # Stage 1: build goimapnotify (no prebuilt Debian package exists)
 # ---------------------------------------------------------------------------
-FROM golang:1.22-bookworm AS gobuild
+FROM golang:1.23-bookworm AS gobuild
 
 WORKDIR /src
-RUN git clone --depth 1 https://github.com/bamthomas/goimapnotify.git . \
-    && GOFLAGS=-mod=mod GOPROXY=direct CGO_ENABLED=0 go build -o /out/goimapnotify .
+RUN git clone --depth 1 https://gitlab.com/shackra/goimapnotify.git . \
+    && go build -o /out/goimapnotify ./cmd/goimapnotify
 
 # ---------------------------------------------------------------------------
 # Stage 2: runtime image
@@ -45,7 +45,7 @@ RUN git clone --depth 1 --branch ${ZPUSH_REF} https://github.com/Z-Hub/Z-Push.gi
     && chown -R vmail:vmail /usr/share/z-push /data/zpush-state /var/log/z-push
 
 # --- goimapnotify binary from build stage ------------------------------------
-COPY --from=gobuild /out/goimapnotify /usr/local/bin/goimapnotify
+COPY --from=gobuild /out/goimapnotify /usr/local/bin/
 
 RUN mkdir -p /data/maildir && chown -R vmail:vmail /data/maildir
 
