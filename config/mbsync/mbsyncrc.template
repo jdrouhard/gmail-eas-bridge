@@ -1,3 +1,8 @@
+CopyArrivalDate yes
+Create Both
+Expunge Both
+SyncState *
+
 IMAPAccount gmail
 Host imap.gmail.com
 User ${GMAIL_USER}
@@ -9,9 +14,8 @@ IMAPStore gmail-remote
 Account gmail
 
 MaildirStore gmail-local
-Path /data/maildir/
-Inbox /data/maildir/INBOX
-SubFolders Verbatim
+Inbox /data/maildir/
+SubFolders Maildir++
 
 # Map Gmail's [Gmail]/* special folders onto the plain folder names
 # z-push's imap.php config expects (Sent, Drafts, Trash, Spam, Archive).
@@ -21,37 +25,22 @@ Channel gmail-inbox
 Far :gmail-remote:
 Near :gmail-local:
 Patterns "INBOX"
-Create Both
-Expunge Both
-SyncState *
 
 Channel gmail-sent
 Far :gmail-remote:"[Gmail]/Sent Mail"
 Near :gmail-local:"Sent"
-Create Both
-Expunge Both
-SyncState *
 
 Channel gmail-drafts
 Far :gmail-remote:"[Gmail]/Drafts"
 Near :gmail-local:"Drafts"
-Create Both
-Expunge Both
-SyncState *
 
 Channel gmail-trash
 Far :gmail-remote:"[Gmail]/Trash"
 Near :gmail-local:"Trash"
-Create Both
-Expunge Both
-SyncState *
 
 Channel gmail-spam
 Far :gmail-remote:"[Gmail]/Spam"
 Near :gmail-local:"Spam"
-Create Both
-Expunge Both
-SyncState *
 
 # [Gmail]/All Mail is Gmail's "every message, regardless of label" view -
 # a message sitting in INBOX also lives here under a DIFFERENT UID. That
@@ -65,9 +54,6 @@ SyncState *
 Channel gmail-archive
 Far :gmail-remote:"[Gmail]/All Mail"
 Near :gmail-local:"Archive"
-Create Both
-Expunge Both
-SyncState *
 
 Group gmail
 Channel gmail-inbox
