@@ -32,7 +32,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && PHP_INI=$(find /etc/php -name "php.ini" -path "*fpm*" | head -n1) \
     && sed -i \
         -e "s|^memory_limit = .*|memory_limit = 512M|" \
-        -e "s|^max_execution_time = .*|max_execution_time = 300|" \
+        -e "s|^max_execution_time = .*|max_execution_time = 900|" \
+        -e "s|^max_input_time = .*|max_input_time = 300|" \
         -e "s|^upload_max_filesize = .*|upload_max_filesize = 50M|" \
         -e "s|^post_max_size = .*|post_max_size = 50M|" \
         "$PHP_INI"
