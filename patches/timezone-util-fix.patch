@@ -1,0 +1,75 @@
+diff --git a/src/lib/utils/timezoneutil.php b/src/lib/utils/timezoneutil.php
+index 8d46a8d9..cc4cbf70 100644
+--- a/src/lib/utils/timezoneutil.php
++++ b/src/lib/utils/timezoneutil.php
+@@ -1312,30 +1312,62 @@ class TimezoneUtil {
+      */
+     public static function MakeUTCDate($value, $timezone = null) {
+         $tz = null;
++
+         if ($timezone) {
+             $tz = timezone_open($timezone);
+         }
++
+         if (!$tz) {
+-            //If there is no timezone set, we use the default timezone
++            // If there is no timezone set, use the default timezone.
+             $tz = timezone_open(date_default_timezone_get());
+         }
+-        //20110930T090000Z
+-        $date = date_create_from_format('Ymd\THis\Z', $value, timezone_open("UTC"));
++
++        $utc = timezone_open("UTC");
++
++        // Standard iCalendar UTC date-time:
++        // 20110930T090000Z
++        $date = date_create_from_format('Ymd\THis\Z', $value, $utc);
++
+         if (!$date) {
+-            //20110930T090000
++            // ISO-8601 / RFC3339 UTC date-time:
++            // 2011-09-30T09:00:00Z
++            $date = date_create_from_format('Y-m-d\TH:i:s\Z', $value, $utc);
++        }
++
++        if (!$date) {
++            // ISO-8601 date-time with an explicit timezone offset:
++            // 2011-09-30T09:00:00+00:00
++            $date = date_create_from_format('Y-m-d\TH:i:sP', $value);
++        }
++
++        if (!$date) {
++            // Existing iCalendar date-time without timezone:
++            // 20110930T090000
+             $date = date_create_from_format('Ymd\THis', $value, $tz);
+         }
++
+         if (!$date) {
+-            //20110930 (Append T000000Z to the date, so it starts at midnight)
+-            $date = date_create_from_format('Ymd\THis\Z', $value . "T000000Z", $tz);
++            // Existing date-only handling:
++            // 20110930
++            $date = date_create_from_format('Ymd\THis\Z', $value . "T000000Z", $utc);
+         }
++
+         if (!$date) {
+-            ZLog::Write(LOGLEVEL_ERROR, sprintf("TimezoneUtil::MakeUTCDate(): failed to convert '%s' to date", $value));
++            ZLog::Write(
++                LOGLEVEL_ERROR,
++                sprintf(
++                    "TimezoneUtil::MakeUTCDate(): failed to convert '%s' to date",
++                    $value
++                )
++            );
++
++            // Do not call date_timestamp_get(false).
++            return false;
+         }
++
+         return date_timestamp_get($date);
+     }
+ 
+-
+     /**
+      * Generate a tzid from various formats
+      *

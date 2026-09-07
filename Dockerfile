@@ -53,6 +53,8 @@ COPY patches/ /tmp/patches/
 RUN git clone --depth 1 --branch ${ZPUSH_REF} https://github.com/Z-Hub/Z-Push.git /tmp/z-push \
     && git -C /tmp/z-push apply /tmp/patches/imap-delete-no-trash-move.patch \
     && git -C /tmp/z-push apply /tmp/patches/imap-idle-sink.patch \
+    && git -C /tmp/z-push apply /tmp/patches/imap-header-parsing-improvements.patch \
+    && git -C /tmp/z-push apply /tmp/patches/timezone-util-fix.patch \
     && mkdir -p /usr/share/z-push \
     && cp -r /tmp/z-push/src/* /usr/share/z-push/ \
     && rm -rf /tmp/z-push /tmp/patches \

@@ -1,0 +1,67 @@
+diff --git a/src/backend/imap/imap.php b/src/backend/imap/imap.php
+index 7eafd65b..aead09bb 100644
+--- a/src/backend/imap/imap.php
++++ b/src/backend/imap/imap.php
+@@ -1318,7 +1318,9 @@ public function GetMessage($folderid, $id, $contentparameters) {
+             unset($textBody);
+             unset($mail_headers);
+ 
+-            $output->datereceived = isset($message->headers["date"]) ? $this->cleanupDate($message->headers["date"]) : null;
++            $output->datereceived = null;
++            if (isset($message->headers["date"]))
++                $output->datereceived = is_array($message->headers["date"]) ? $message->headers["date"][0] : $message->headers["date"];
+ 
+             if ($is_smime) {
+                 // #190, KD 2015-06-04 - Add Encrypted (and possibly signed) to the classifications emitted
+@@ -1332,10 +1334,15 @@ public function GetMessage($folderid, $id, $contentparameters) {
+             else {
+                 $output->messageclass = "IPM.Note";
+             }
+-            $output->subject = isset($message->headers["subject"]) ? $message->headers["subject"] : "";
++            $output->subject = null;
++            if (isset($message->headers["subject"]))
++                $output->subject = is_array($message->headers["subject"]) ? $message->headers["subject"][0] : $message->headers["subject"];
++
+             $output->read = $stat["flags"];
+-            $output->from = isset($message->headers["from"]) ? $message->headers["from"] : null;
+ 
++            $output->from = null;
++            if (isset($message->headers["from"]))
++                $output->from = is_array($message->headers["from"]) ? $message->headers["from"][0] : $message->headers["from"];
+             if (isset($message->headers["thread-topic"])) {
+                 $output->threadtopic = $message->headers["thread-topic"];
+             }
+diff --git a/src/include/mimeDecode.php b/src/include/mimeDecode.php
+index ff323969..771a3cdb 100644
+--- a/src/include/mimeDecode.php
++++ b/src/include/mimeDecode.php
+@@ -347,9 +347,14 @@ function _decode($headers, $body, $default_ctype = 'text/plain')
+                 case 'multipart/relative': //#20431 - android
+                 case 'multipart/mixed':
+                 case 'application/vnd.wap.multipart.related':
+-                    if(!isset($content_type['other']['boundary'])){
+-                        $this->_error = 'No boundary found for ' . $content_type['value'] . ' part';
+-                        return false;
++                    if (!isset($content_type['other']['boundary'])) {
++                        if ($this->_include_bodies) {
++                            $encoding = isset($content_transfer_encoding['value']) ? $content_transfer_encoding['value'] : '7bit';
++                            $charset = isset($content_type['other']['charset']) ? $content_type['other']['charset'] : $this->_charset;
++                            $return->body = $this->_decode_bodies ? $this->_decodeBody($body, $encoding, $charset, false) : $body;
++                        }
++                        $this->_error = 'Boundary missing in part ' . $content_type['value'] . ', content treated as plain text.';
++                        break;
+                     }
+ 
+                     $default_ctype = (strtolower($content_type['value']) === 'multipart/digest') ? 'message/rfc822' : 'text/plain';
+diff --git a/src/include/z_RFC822.php b/src/include/z_RFC822.php
+index bb5f7d82..78a19d24 100644
+--- a/src/include/z_RFC822.php
++++ b/src/include/z_RFC822.php
+@@ -199,6 +199,7 @@ public function parseAddressList($address = null, $default_domain = null, $nest_
+ 
+         if (isset($address))        $this->address        = $address;
+         // z-push addition
++	if (is_array($this->address)) $this->address      = $this->address[0];
+         if (strlen(trim((string) $this->address)) == 0) return array();
+         if (isset($default_domain)) $this->default_domain = $default_domain;
+         if (isset($nest_groups))    $this->nestGroups     = $nest_groups;
