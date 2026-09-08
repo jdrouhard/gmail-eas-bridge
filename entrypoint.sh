@@ -108,9 +108,13 @@ fi
 # goimapnotify/mbsync/php-fpm/dovecot's mail delivery all run as vmail.
 chown vmail:vmail /etc/mbsync/mbsyncrc /etc/imapnotify/gmail.json
 
+touch /run/mbsync.lock
+chown vmail:vmail /run/mbsync.lock
+chmod 600 /run/mbsync.lock
+
 # Prime the maildir on first boot so z-push has something to serve
 # immediately instead of waiting for the first IDLE event.
 echo "[entrypoint] running initial mbsync pass..."
-gosu vmail mbsync -c /etc/mbsync/mbsyncrc -a || echo "[entrypoint] initial mbsync failed - will retry on next IDLE event"
+gosu vmail /usr/local/bin/mbsync-wrapper || echo "[entrypoint] initial mbsync failed - will retry on next IDLE or Maildir event"
 
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/stack.conf

@@ -1,0 +1,21 @@
+#!/bin/bash
+set -uo pipefail
+
+LOCK=/run/mbsync.lock
+CONFIG=/etc/mbsync/mbsyncrc
+
+exec 9>"$LOCK"
+
+if ! flock -w 30 9; then
+    echo "[mbsync-wrapper] timed out waiting for another mbsync" >&2
+    exit 75
+fi
+
+echo "[mbsync-wrapper] starting mbsync $*" >&2
+
+if [ "$#" -eq 0 ]; then
+    exec /usr/bin/mbsync -c "$CONFIG" -a
+else
+    exec /usr/bin/mbsync -c "$CONFIG" "$@"
+fi
+
