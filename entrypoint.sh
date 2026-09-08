@@ -81,6 +81,16 @@ chmod 600 /etc/mbsync/mbsyncrc
 render /etc/imapnotify/gmail.json.template /etc/imapnotify/gmail.json 'GMAIL_USER'
 chmod 600 /etc/imapnotify/gmail.json
 
+: "${MBSYNC_CRON_SCHEDULE:=0 * * * *}"
+export MBSYNC_CRON_SCHEDULE
+render /etc/cron.d/mbsync-periodic.template /etc/cron.d/mbsync-periodic 'MBSYNC_CRON_SCHEDULE'
+rm -f /etc/cron.d/mbsync-periodic.template
+# cron refuses to load /etc/cron.d entries that aren't owned by root or
+# that are group/other-writable - unlike everything else here, this one
+# stays root-owned on purpose.
+chown root:root /etc/cron.d/mbsync-periodic
+chmod 644 /etc/cron.d/mbsync-periodic
+
 # Make sure the runtime dirs exist. Everything under /data - the one
 # bind mount you're expected to provide - is owned by vmail (PUID:PGID).
 # Only pay for a recursive chown when ownership doesn't already match

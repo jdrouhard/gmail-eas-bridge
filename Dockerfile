@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         isync \
         nginx-light \
         php-fpm php-imap php-intl php-xml php-mbstring \
-        git supervisor gettext-base ca-certificates tzdata gosu passwd \
+        git supervisor gettext-base ca-certificates tzdata gosu passwd cron \
     && rm -rf /var/lib/apt/lists/* \
     && PHP_FPM_POOL=$(find /etc/php -name "www.conf" -path "*fpm*" | head -n1) \
     && sed -i "s|^listen = .*|listen = 127.0.0.1:9000|" "$PHP_FPM_POOL" \
@@ -75,6 +75,7 @@ COPY config/dovecot/conf.d/         /etc/dovecot/conf.d/
 COPY config/dovecot/templates/      /etc/dovecot/templates/
 COPY config/mbsync/mbsyncrc.template        /etc/mbsync/mbsyncrc.template
 COPY config/imapnotify/gmail.json.template  /etc/imapnotify/gmail.json.template
+COPY config/cron/mbsync-cron.template       /etc/cron.d/mbsync-periodic.template
 COPY supervisord.conf /etc/supervisor/conf.d/stack.conf
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh \

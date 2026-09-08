@@ -1,0 +1,6 @@
+MAILTO=""
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Full mbsync pass, independent of goimapnotify's IDLE-triggered syncs.
+${MBSYNC_CRON_SCHEDULE} vmail /usr/bin/mbsync -c /etc/mbsync/mbsyncrc -a >> /proc/1/fd/1 2>> /proc/1/fd/2
