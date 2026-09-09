@@ -9,8 +9,8 @@ eas.yourdomain.tld {
         # a future Caddy upgrade or global default change doesn't silently
         # start killing those connections.
         transport http {
-            read_timeout 30m
-            write_timeout 30m
+            read_timeout 61m
+            write_timeout 61m
             dial_timeout 10s
         }
 
