@@ -76,7 +76,7 @@ COPY config/dovecot/conf.d/         /etc/dovecot/conf.d/
 COPY config/dovecot/templates/      /etc/dovecot/templates/
 COPY config/mbsync/mbsyncrc.template        /etc/mbsync/mbsyncrc.template
 COPY config/imapnotify/gmail.json.template  /etc/imapnotify/gmail.json.template
-COPY config/cron/mbsync-cron.template       /etc/cron.d/mbsync-periodic.template
+COPY config/cron/mbsync-cron.template       /etc/cron.d.templates/mbsync-periodic.template
 COPY config/mbsync/mbsync-wrapper           /usr/local/bin/mbsync-wrapper
 COPY config/mbsync/maildir-watch.sh         /usr/local/bin/maildir-watch.sh
 COPY supervisord.conf /etc/supervisor/conf.d/stack.conf

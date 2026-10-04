@@ -75,6 +75,9 @@ render /etc/dovecot/templates/10-submission.conf.template \
        'GMAIL_USER GMAIL_APP_PASSWORD'
 chmod 600 /etc/dovecot/conf.d/10-submission.conf /etc/dovecot/conf.d/10-auth.conf
 
+# remove stale pid file from last run in this container
+rm -f /run/dovecot/master.pid
+
 render /etc/mbsync/mbsyncrc.template /etc/mbsync/mbsyncrc 'GMAIL_USER'
 chmod 600 /etc/mbsync/mbsyncrc
 
@@ -83,8 +86,9 @@ chmod 600 /etc/imapnotify/gmail.json
 
 : "${MBSYNC_CRON_SCHEDULE:=0 * * * *}"
 export MBSYNC_CRON_SCHEDULE
-render /etc/cron.d/mbsync-periodic.template /etc/cron.d/mbsync-periodic 'MBSYNC_CRON_SCHEDULE'
-rm -f /etc/cron.d/mbsync-periodic.template
+render /etc/cron.d.templates/mbsync-periodic.template \
+       /etc/cron.d/mbsync-periodic \
+       'MBSYNC_CRON_SCHEDULE'
 # cron refuses to load /etc/cron.d entries that aren't owned by root or
 # that are group/other-writable - unlike everything else here, this one
 # stays root-owned on purpose.
@@ -114,7 +118,11 @@ chmod 600 /run/mbsync.lock
 
 # Prime the maildir on first boot so z-push has something to serve
 # immediately instead of waiting for the first IDLE event.
-echo "[entrypoint] running initial mbsync pass..."
-gosu vmail /usr/local/bin/mbsync-wrapper || echo "[entrypoint] initial mbsync failed - will retry on next IDLE or Maildir event"
+(
+    echo "[entrypoint] starting initial mbsync pass in background..."
+    if ! gosu vmail /usr/local/bin/mbsync-wrapper; then
+        echo "[entrypoint] initial mbsync failed; background retry mechanisms remain active" >&2
+    fi
+) &
 
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/stack.conf
