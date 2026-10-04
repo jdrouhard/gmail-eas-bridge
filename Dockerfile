@@ -45,13 +45,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN useradd -u 1000 -U -d /data/maildir -m -s /usr/sbin/nologin vmail
 
 # --- z-push (community-maintained fork) -------------------------------------
-ARG ZPUSH_REF=develop
+ARG ZPUSH_REF=ae1d2fee7a144384e8f7ae67745322ab83c069e1
 # master is abandoned (last commit 2021) - develop is where all active
-# work happens and what config/zpush/*.php were verified against. See
-# README.md for the release/2.7 alternative if you want something more
-# pinned than tracking develop's moving HEAD.
+# work happens and what config/zpush/*.php were verified against.COPY patches/ /tmp/patches/
 COPY patches/ /tmp/patches/
-RUN git clone --depth 1 --branch ${ZPUSH_REF} https://github.com/Z-Hub/Z-Push.git /tmp/z-push \
+RUN mkdir -p /tmp/z-push \
+    && git -C /tmp/z-push init \
+    && git -C /tmp/z-push remote add origin https://github.com/Z-Hub/Z-Push.git \
+    && git -C /tmp/z-push fetch --depth 1 origin ${ZPUSH_REF} \
+    && git -C /tmp/z-push checkout FETCH_HEAD \
     && git -C /tmp/z-push apply /tmp/patches/imap-delete-no-trash-move.patch \
     && git -C /tmp/z-push apply /tmp/patches/imap-idle-sink.patch \
     && git -C /tmp/z-push apply /tmp/patches/imap-header-parsing-improvements.patch \

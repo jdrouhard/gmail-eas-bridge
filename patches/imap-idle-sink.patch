@@ -1,5 +1,26 @@
+diff --git a/src/backend/imap/config.php b/src/backend/imap/config.php
+index c8035cb3..cd48c3c7 100644
+--- a/src/backend/imap/config.php
++++ b/src/backend/imap/config.php
+@@ -42,6 +42,16 @@
+ define('IMAP_AUTOSEEN_ON_DELETE', false);
+ 
+ 
++// Use IMAP IDLE (RFC 2177) in ChangesSink for near-instant push notifications.
++//      When false (default) the folders are polled every PING_INTERVAL seconds, as before.
++//      When true, one IDLE connection per synchronized folder is kept open for the duration of a Ping,
++//      and the backend falls back to polling for the rest of that Ping if IDLE fails for any reason.
++//      Requires an IMAP server that advertises the IDLE capability.
++//      The IDLE connections follow the transport flags in IMAP_OPTIONS (/ssl, /tls, /notls, /novalidate-cert).
++//      Without /notls they are always encrypted: if STARTTLS is not offered, IDLE is not used.
++define('IMAP_USE_IDLE', false);
++
++
+ // IMPORTANT: BASIC IMAP FOLDERS [ask your mail admin]
+         // We can have diferent cases (case insensitive):
+         // 1.
 diff --git a/src/backend/imap/imap.php b/src/backend/imap/imap.php
-index 7eafd65..15f73b2 100644
+index 7eafd65b..bbcdede6 100644
 --- a/src/backend/imap/imap.php
 +++ b/src/backend/imap/imap.php
 @@ -27,6 +27,7 @@
@@ -19,17 +40,17 @@ index 7eafd65..15f73b2 100644
      private $folderhierarchy;
      private $excludedFolders;
      private static $mimeTypes = false;
-@@ -720,6 +723,36 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
+@@ -720,6 +723,36 @@ public function ChangesSink($timeout = 30) {
              return $notifications;
          }
  
-+        // Prefer real IMAP IDLE (RFC 2177) when the server supports it. On any
++        // Use real IMAP IDLE (RFC 2177) when enabled with IMAP_USE_IDLE. On any
 +        // failure during setup or wait the sink is disabled for the rest of
 +        // this Ping and we fall through to the original polling code below.
-+        if ($this->idleSink !== false) {
++        if (defined('IMAP_USE_IDLE') && IMAP_USE_IDLE && $this->idleSink !== false) {
 +            try {
 +                if ($this->idleSink === null) {
-+                    $this->idleSink = new ImapIdleSink(IMAP_SERVER, IMAP_PORT, $this->username, $this->password);
++                    $this->idleSink = new ImapIdleSink(IMAP_SERVER, IMAP_PORT, IMAP_OPTIONS, $this->username, $this->password);
 +                    foreach ($this->sinkfolders as $imapid) {
 +                        $this->idleSink->addFolder($imapid);
 +                    }
@@ -58,10 +79,10 @@ index 7eafd65..15f73b2 100644
  
 diff --git a/src/backend/imap/imap_idle_sink.php b/src/backend/imap/imap_idle_sink.php
 new file mode 100644
-index 0000000..3ac3665
+index 00000000..d75a311e
 --- /dev/null
 +++ b/src/backend/imap/imap_idle_sink.php
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,299 @@
 +<?php
 +/***********************************************
 +* File      :   imap_idle_sink.php
@@ -99,20 +120,41 @@ index 0000000..3ac3665
 +    private $port;
 +    private $username;
 +    private $password;
++    private $tlsMode;              // 'ssl' (implicit TLS), 'starttls' or 'none'
++    private $verifyCert;
 +    private $connectTimeout = 5;
 +    private $ioTimeout = 30;
 +
 +    /**
 +     * @param string $host       IMAP server hostname or IP
 +     * @param int    $port       IMAP server port (typically 143 or 993)
++     * @param string $options    IMAP_OPTIONS as passed to imap_open(). Only the
++     *                           transport flags are used: /ssl, /tls, /notls and
++     *                           /novalidate-cert.
 +     * @param string $username   IMAP login username
 +     * @param string $password   IMAP login password
 +     */
-+    public function __construct($host, $port, $username, $password) {
++    public function __construct($host, $port, $options, $username, $password) {
 +        $this->host = $host;
 +        $this->port = (int)$port;
 +        $this->username = $username;
 +        $this->password = $password;
++
++        $opts = strtolower((string)$options);
++        if (strpos($opts, '/ssl') !== false) {
++            $this->tlsMode = 'ssl';
++        }
++        elseif (strpos($opts, '/notls') !== false) {
++            $this->tlsMode = 'none';
++        }
++        else {
++            // "/tls" and the c-client default both use STARTTLS. Unlike c-client,
++            // the sink does not fall back to plaintext when the server does not
++            // offer STARTTLS: credentials are only sent in clear when /notls is
++            // configured explicitly.
++            $this->tlsMode = 'starttls';
++        }
++        $this->verifyCert = (strpos($opts, '/novalidate-cert') === false);
 +    }
 +
 +    public function __destruct() {
@@ -135,9 +177,18 @@ index 0000000..3ac3665
 +
 +        $errno = 0;
 +        $errstr = '';
-+        $sock = @fsockopen($this->host, $this->port, $errno, $errstr, $this->connectTimeout);
++        $context = stream_context_create(array('ssl' => array(
++            'verify_peer'       => $this->verifyCert,
++            'verify_peer_name'  => $this->verifyCert,
++            'allow_self_signed' => !$this->verifyCert,
++            'peer_name'         => $this->host,
++        )));
++        // IPv6 literals need brackets in a socket URI
++        $uriHost = (strpos($this->host, ':') !== false && $this->host[0] !== '[') ? '[' . $this->host . ']' : $this->host;
++        $scheme = ($this->tlsMode === 'ssl') ? 'ssl' : 'tcp';
++        $sock = @stream_socket_client("$scheme://$uriHost:{$this->port}", $errno, $errstr, $this->connectTimeout, STREAM_CLIENT_CONNECT, $context);
 +        if (!$sock) {
-+            throw new Exception("ImapIdleSink: connect {$this->host}:{$this->port} failed: $errstr ($errno)");
++            throw new Exception("ImapIdleSink: connect {$this->host}:{$this->port} ($scheme) failed: $errstr ($errno)");
 +        }
 +        stream_set_timeout($sock, $this->ioTimeout);
 +
@@ -146,6 +197,28 @@ index 0000000..3ac3665
 +        if (strpos($greeting, '* OK') !== 0) {
 +            @fclose($sock);
 +            throw new Exception("ImapIdleSink: unexpected greeting: " . trim($greeting));
++        }
++
++        // STARTTLS before any credentials are sent
++        if ($this->tlsMode === 'starttls') {
++            $tag = $this->nextTag();
++            @fwrite($sock, $tag . " STARTTLS\r\n");
++            $resp = $this->readTagged($sock, $tag);
++            if (!preg_match('/^' . preg_quote($tag, '/') . ' OK/m', $resp)) {
++                @fclose($sock);
++                throw new Exception("ImapIdleSink: STARTTLS refused by {$this->host}: " . trim($resp));
++            }
++            $method = STREAM_CRYPTO_METHOD_TLS_CLIENT;
++            if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) {
++                $method |= STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
++            }
++            if (defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT')) {
++                $method |= STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT;
++            }
++            if (!@stream_socket_enable_crypto($sock, true, $method)) {
++                @fclose($sock);
++                throw new Exception("ImapIdleSink: TLS negotiation with {$this->host} failed");
++            }
 +        }
 +
 +        // LOGIN

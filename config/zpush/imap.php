@@ -45,6 +45,9 @@ define('IMAP_OPTIONS', '/notls/norsh');
 //      BE AWARE that you will lose the unread flag, but some mail clients do this so the Trash folder doesn't get boldened
 define('IMAP_AUTOSEEN_ON_DELETE', false);
 
+// Use IMAP_IDLE for connection to dovecot
+define('IMAP_USE_IDLE', true);
+
 
 // IMPORTANT: BASIC IMAP FOLDERS [ask your mail admin]
         // We can have diferent cases (case insensitive):
