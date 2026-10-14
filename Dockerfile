@@ -45,7 +45,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN useradd -u 1000 -U -d /data/maildir -m -s /usr/sbin/nologin vmail
 
 # --- z-push (community-maintained fork) -------------------------------------
-ARG ZPUSH_REF=ae1d2fee7a144384e8f7ae67745322ab83c069e1
+ARG ZPUSH_REF=783db865c674cad12a2a3a8fba765894d320cb3e
 # master is abandoned (last commit 2021) - develop is where all active
 # work happens and what config/zpush/*.php were verified against.COPY patches/ /tmp/patches/
 COPY patches/ /tmp/patches/
@@ -55,7 +55,6 @@ RUN mkdir -p /tmp/z-push \
     && git -C /tmp/z-push fetch --depth 1 origin ${ZPUSH_REF} \
     && git -C /tmp/z-push checkout FETCH_HEAD \
     && git -C /tmp/z-push apply /tmp/patches/imap-delete-no-trash-move.patch \
-    && git -C /tmp/z-push apply /tmp/patches/imap-idle-sink.patch \
     && git -C /tmp/z-push apply /tmp/patches/imap-header-parsing-improvements.patch \
     && git -C /tmp/z-push apply /tmp/patches/timezone-util-fix.patch \
     && mkdir -p /usr/share/z-push \

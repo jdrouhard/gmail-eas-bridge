@@ -1,19 +1,8 @@
 diff --git a/src/backend/imap/imap.php b/src/backend/imap/imap.php
-index 7eafd65b..aead09bb 100644
+index 15a863ee..553036d9 100644
 --- a/src/backend/imap/imap.php
 +++ b/src/backend/imap/imap.php
-@@ -1318,7 +1318,9 @@ public function GetMessage($folderid, $id, $contentparameters) {
-             unset($textBody);
-             unset($mail_headers);
- 
--            $output->datereceived = isset($message->headers["date"]) ? $this->cleanupDate($message->headers["date"]) : null;
-+            $output->datereceived = null;
-+            if (isset($message->headers["date"]))
-+                $output->datereceived = is_array($message->headers["date"]) ? $message->headers["date"][0] : $message->headers["date"];
- 
-             if ($is_smime) {
-                 // #190, KD 2015-06-04 - Add Encrypted (and possibly signed) to the classifications emitted
-@@ -1332,10 +1334,15 @@ public function GetMessage($folderid, $id, $contentparameters) {
+@@ -1383,9 +1383,14 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
              else {
                  $output->messageclass = "IPM.Note";
              }
@@ -24,18 +13,17 @@ index 7eafd65b..aead09bb 100644
 +
              $output->read = $stat["flags"];
 -            $output->from = isset($message->headers["from"]) ? $message->headers["from"] : null;
- 
 +            $output->from = null;
 +            if (isset($message->headers["from"]))
 +                $output->from = is_array($message->headers["from"]) ? $message->headers["from"][0] : $message->headers["from"];
+ 
              if (isset($message->headers["thread-topic"])) {
                  $output->threadtopic = $message->headers["thread-topic"];
-             }
 diff --git a/src/include/mimeDecode.php b/src/include/mimeDecode.php
 index ff323969..771a3cdb 100644
 --- a/src/include/mimeDecode.php
 +++ b/src/include/mimeDecode.php
-@@ -347,9 +347,14 @@ function _decode($headers, $body, $default_ctype = 'text/plain')
+@@ -347,9 +347,14 @@ class Mail_mimeDecode
                  case 'multipart/relative': //#20431 - android
                  case 'multipart/mixed':
                  case 'application/vnd.wap.multipart.related':
@@ -54,14 +42,14 @@ index ff323969..771a3cdb 100644
  
                      $default_ctype = (strtolower($content_type['value']) === 'multipart/digest') ? 'message/rfc822' : 'text/plain';
 diff --git a/src/include/z_RFC822.php b/src/include/z_RFC822.php
-index bb5f7d82..78a19d24 100644
+index bb5f7d82..19f075c4 100644
 --- a/src/include/z_RFC822.php
 +++ b/src/include/z_RFC822.php
-@@ -199,6 +199,7 @@ public function parseAddressList($address = null, $default_domain = null, $nest_
+@@ -199,6 +199,7 @@ class Mail_RFC822 {
  
          if (isset($address))        $this->address        = $address;
          // z-push addition
-+	if (is_array($this->address)) $this->address      = $this->address[0];
++        if (is_array($this->address)) $this->address      = $this->address[0];
          if (strlen(trim((string) $this->address)) == 0) return array();
          if (isset($default_domain)) $this->default_domain = $default_domain;
          if (isset($nest_groups))    $this->nestGroups     = $nest_groups;
