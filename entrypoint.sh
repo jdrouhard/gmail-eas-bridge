@@ -81,8 +81,8 @@ rm -f /run/dovecot/master.pid
 render /etc/mbsync/mbsyncrc.template /etc/mbsync/mbsyncrc 'GMAIL_USER'
 chmod 600 /etc/mbsync/mbsyncrc
 
-render /etc/imapnotify/gmail.json.template /etc/imapnotify/gmail.json 'GMAIL_USER'
-chmod 600 /etc/imapnotify/gmail.json
+render /etc/imapnotify/gmail.yaml.template /etc/imapnotify/gmail.yaml 'GMAIL_USER'
+chmod 600 /etc/imapnotify/gmail.yaml
 
 : "${MBSYNC_CRON_SCHEDULE:=0 * * * *}"
 export MBSYNC_CRON_SCHEDULE
@@ -110,7 +110,7 @@ else
 fi
 
 # goimapnotify/mbsync/php-fpm/dovecot's mail delivery all run as vmail.
-chown vmail:vmail /etc/mbsync/mbsyncrc /etc/imapnotify/gmail.json
+chown vmail:vmail /etc/mbsync/mbsyncrc /etc/imapnotify/gmail.yaml
 
 touch /run/mbsync.lock
 chown vmail:vmail /run/mbsync.lock

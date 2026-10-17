@@ -1,0 +1,15 @@
+configurations:
+  - host: imap.gmail.com
+    port: 993
+    tls: true
+    tlsOptions:
+      starttls: false
+    username: ${GMAIL_USER}
+    passwordCMD: cat /run/secrets/gmail_app_password
+    onNewMail: /usr/local/bin/mbsync-wrapper gmail
+    onChangedMail: /usr/local/bin/mbsync-wrapper gmail
+    onDeletedMail: /usr/local/bin/mbsync-wrapper gmail
+    boxes:
+      - mailbox: INBOX
+connectivityHosts:
+  - archlinux.org:80
